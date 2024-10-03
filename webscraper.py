@@ -3,15 +3,15 @@ This code scrapes from Eater's restaurant lists and adds it to a Google spreadsh
 You can then import the sheet into a Google map!
 """
 
-from oauth2client.service_account import ServiceAccountCredentials
+import google.auth
+from google.oauth2.service_account import Credentials
 import gspread
 import requests
 from bs4 import BeautifulSoup
 
-
 # Webscraper code
 # Replace the URL with your desired URL
-URL = "https://www.eater.com/maps/best-restaurants-florence-italy"
+URL = "https://www.eater.com/maps/best-restaurants-kuala-lumpur-malaysia"
 page = requests.get(URL)
 
 soup = BeautifulSoup(page.content, "html.parser")
@@ -28,15 +28,20 @@ restaurants = [
 ]
 values = [[o[e] for e in order] for o in restaurants]
 
-
 # Accesses and writes to Google sheet
 scopes = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
-    ]
-credentials = ServiceAccountCredentials.from_json_keyfile_name("eater-scraper-key.json", scopes)
-file = gspread.authorize(credentials)
-sheet = file.open("Eater Scraper")
-sheet = sheet.sheet1
+]
+
+# Use google.oauth2.service_account.Credentials to create credentials
+credentials = Credentials.from_service_account_file("eater-scraper-key.json", scopes=scopes)
+
+# Authorize gspread with the new credentials
+client = gspread.authorize(credentials)
+
+# Open the Google Sheet and write the data
+sheet = client.open("Eater Scraper").sheet1
 sheet.append_rows(values, value_input_option='USER_ENTERED')
+
 
